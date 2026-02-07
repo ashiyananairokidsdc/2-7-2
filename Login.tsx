@@ -9,14 +9,26 @@ interface LoginProps {
 
 const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
   const [error, setError] = useState<string | null>(null);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const handleLogin = async () => {
+    setIsLoggingIn(true);
+    setError(null);
     try {
       const user = await loginWithGoogle();
       onLoginSuccess(user);
     } catch (err: any) {
       console.error(err);
-      setError("ログインに失敗しました。もう一度お試しください。");
+      // Firebaseのエラーコードに応じてメッセージを分岐
+      if (err.code === 'auth/unauthorized-domain') {
+        setError("このドメインからのログインが許可されていません。Firebaseコンソールの「承認済みドメイン」にこのURLを追加してください。");
+      } else if (err.code === 'auth/popup-blocked') {
+        setError("ポップアップがブロックされました。ブラウザの設定で許可してください。");
+      } else {
+        setError(`ログインに失敗しました: ${err.message || "時間を置いて再度お試しください"}`);
+      }
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -35,18 +47,28 @@ const Login: React.FC<LoginProps> = ({ onLoginSuccess }) => {
           </div>
         </div>
 
-        {error && <p className="text-red-500 text-sm text-center mb-4 font-medium">{error}</p>}
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg">
+            <p className="text-red-700 text-xs font-medium leading-relaxed">{error}</p>
+          </div>
+        )}
 
         <button 
           onClick={handleLogin}
-          className="w-full flex items-center justify-center gap-4 px-6 py-4 bg-white border-2 border-slate-100 rounded-2xl hover:border-blue-400 hover:bg-blue-50 transition-all duration-300 shadow-sm group"
+          disabled={isLoggingIn}
+          className="w-full flex items-center justify-center gap-4 px-6 py-4 bg-white border-2 border-slate-100 rounded-2xl hover:border-blue-400 hover:bg-blue-50 transition-all duration-300 shadow-sm group disabled:opacity-50"
         >
-          <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-6 h-6 group-hover:scale-110 transition-transform" />
-          <span className="font-bold text-slate-700">Googleアカウントでログイン</span>
+          {isLoggingIn ? (
+            <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent animate-spin rounded-full"></div>
+          ) : (
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-6 h-6 group-hover:scale-110 transition-transform" />
+          )}
+          <span className="font-bold text-slate-700">{isLoggingIn ? "ログイン中..." : "Googleアカウントでログイン"}</span>
         </button>
 
-        <p className="mt-10 text-center text-slate-400 text-xs">
-          院内関係者以外はご利用いただけません
+        <p className="mt-10 text-center text-slate-400 text-xs leading-relaxed">
+          院内関係者以外はご利用いただけません<br/>
+          （スタッフ専用アカウントでログインしてください）
         </p>
       </div>
     </div>
