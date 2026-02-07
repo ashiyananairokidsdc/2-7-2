@@ -1,0 +1,9 @@
+
+{
+  "name": "なないろ歯科 芦屋医院 院内チャット",
+  "description": "Googleログイン対応、リアルタイム同期、重要フラグ、既読機能、AI要約を搭載した歯科医院向けチャットアプリ。",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
